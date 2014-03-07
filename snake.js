@@ -35,8 +35,7 @@
 	(function($){
 		var bgdiv = $("div.bg");
 		var a = [], snake = [];
-		var FLAG = false, Seeds;
-		//var snake = [1,2,3,4,5,6];
+		var FLAG = false, Seeds, LENGTH = 0, currentSnake;
 
 		function createDiv(id){
 			var fgdiv = document.createElement("div");
@@ -62,90 +61,88 @@
 			clearInterval(timer);
 		}
 
+		function debug(x,y){
+			console.log([x,y].join('__'));			
+		}
+		//Seed 封装了贪吃蛇的所有属性和方法(行为)
 		function Seed(){
-			this.x = parseInt(Math.random()*17);
-			this.y = parseInt(Math.random()*18);
-			var index = (this.y*17) + this.x;
-			this.id = 'id'+index;
-			//console.log(this.id);
-			var that = this;
+			var x = parseInt(Math.random()*17);
+			var y = parseInt(Math.random()*18);
+			var id = ((y*17) + x);
+
+			this.getid = function(){
+				return id;
+			}
+			this.setid = function(){
+				id = ((y*17) + x);
+			}
 			this.show = function(){
-				$("#" + that.id).addClass("snake");
-			};
-			this.remove = function(){
-				$("#" + that.id).removeClass("snake");
-			}
-			this.position = function (){
-				a[this.y][this.x] = 1;
-			}
-			this.eat = function(type){
-				var x = this.x, y=this.y;
-				switch(type){
-					case 'U':
-						y--;
-						break;
-					case 'D':
-						y++;
-						break;
-					case 'L':
-						x--;
-						break;
-					case 'R':
-						x++;
-						break;
-				}
-				if(a[y][x] == 1){
-					console.log('吃到了...');
-					FLAG = false;
-					snake.unshift(Seeds);
-				
+				if(!$("#id"+id).hasClass('snake')){
+					$("#id"+id).addClass('snake');					
 				}
 			}
+			this.addhead = function(id){
+				snake.unshift(id);
+				if(!$("#id"+id).hasClass('snake')){
+					$("#id"+id).addClass('snake');
+				}
+			}
+			this.rmtail = function(){
+				var t = snake.pop();
+				if($("#id"+t).hasClass('snake')){
+					$("#id"+t).removeClass('snake');
+				}
+			}
+			this.update = function(id){
+				this.addhead(id);
+				this.rmtail();
+			}
+			//用一个队列结构来实现贪吃蛇的移动 吃代表把id压入队列 移动就是头部压入 尾部弹出 压入的就设置样式背景色 弹出的去除样式背景色 
 			this.move = function(){
-				this.remove();
-				var index = (this.y*17) + this.x;
-			    this.id = 'id'+index;
-				this.show();
-				//snake.				
-			}
-			this.trace = function(){
-			
-			}
+				if(snake.length < LENGTH){
+					console.log('add....');
+					this.addhead(Seeds.getid());	
+				}else{
+					console.log('update....');
+					this.update(this.getid());
+				}
+			}			
+
 			this.up = function(){
-				that.y --;
-				if(that.y < 0){
+				y --;
+				debug(x,y);
+				if(y < 0){
 					gameOver();
 					return false;
 				}
 				this.move();
-				this.eat('U');
 			}
 			this.down = function(){
-				that.y ++;
-				if(that.y > 17){
+				y ++;
+				debug(x,y);
+				if(y > 17){
 					gameOver();
 					return false;
 				}
 				this.move();
-				this.eat('D');
 			}
 			this.left = function(){
-				that.x --;
-				if(that.x < 0){
+				x --;
+				debug(x,y);
+				if(x < 0){
 					gameOver();
 					return false;
 				}
 				this.move();
-				this.eat('L');
 			}
 			this.right = function(){
-				that.x ++;
-				if(that.x > 16){
+				x ++;
+				debug(x,y);
+				if(x > 16){
 					gameOver();
 					return false;
 				}
 				this.move();
-				this.eat('R');
 			}
 			this.start = function(){
 				switch(Face){
@@ -162,35 +159,12 @@
 						this.right();
 						break;
 				}
+				//每次循环需要更新当前id
+				this.setid();
 			}
-			this.run = function(){
-				this.start();
-				if(!FLAG){
-					Seeds = new Seed();
-					Seeds.show();
-					Seeds.position();
-					//console.log(seed2);
-					FLAG = true;
-				}
 
-				//swap(snake, this);
-				// for(var i = 0;i<snake.length;i++){
-				// 	console.log(snake[i].id);
-				// }
-				 console.log(snake);
-			}
 		}
-		function swap(A, b){
-		var B = A[0];
-		A[0] = b
 
-		for(var i = 1;i< A.length; i++){
-		   var C = A[i];
-		   A[i] = B;
-		   B = C;
-		}
-		return A;
-		}
 		var Face = 'L';
 		function initEvent(){
 			$(document).bind('keydown', function(e){
@@ -208,50 +182,35 @@
 						Face = 'D';
 						break;
 				}
-				//console.log(e.keyCode);
 			});
 		}
+
 		init();
 		initEvent();
+
 		var snakeHead = new Seed();
-		//console.log(seed);
-		
-
-		if(snake.length == 0){
-			snake.unshift(snakeHead);
-		}
-		function initSnake(snake, b){
-			var n = [];
-			for(var i in snake){
-				n[i] = snake[i].id;
-			}
-			n = swap(n, b.id);
-			for(var i in n){
-				$("#"+n[i]).addClass('snakeb');
-				console.log($("#"+n[i]));
-			}
-		for(var i=0; i<a.length; i++){
-			for(var j=0; j<a[0].length; j++){
-				var index = (i*17)+j;
-				var id = "id"+index;
-				for(var k=0; k<n.length;k++){
-					//console.log(id);
-					if(n[k] == id){
-						$("#"+id).removeClass('snakeb');
-					}
-				} 
-			}
-		}	
-			console.log(n);
+		snake.unshift(snakeHead.getid());
+		if(!currentSnake){
+			currentSnake = snakeHead;	
 		}
 
+		//主逻辑负责监控是否吃到 是否需要生成新的方块
 		timer = setInterval(function(){
-			var b = snake[0];
-			snake[0].run();
-			initSnake(snake, b);
-		}, 500);
-		//seed.up();
-		//console.log(a);
+			currentSnake.start();
+			if(!FLAG){
+				Seeds = new Seed();
+				LENGTH ++;
+				Seeds.show();
+				FLAG = true;
+			}
+			if(currentSnake.getid() == Seeds.getid()){
+				console.log('吃到了...');
+				FLAG = false;
+				snake.unshift(Seeds.getid());
+				currentSnake = Seeds;						
+			}
+		}, 1000);
+
 	})(jQuery)
 </script>
 </html>	
