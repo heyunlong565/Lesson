@@ -99,13 +99,7 @@
 			}
 			//用一个队列结构来实现贪吃蛇的移动 吃代表把id压入队列 移动就是头部压入 尾部弹出 压入的就设置样式背景色 弹出的去除样式背景色 
 			this.move = function(){
-				if(snake.length < LENGTH){
-					console.log('add....');
-					this.addhead(Seeds.getid());	
-				}else{
-					console.log('update....');
-					this.update(this.getid());
-				}
+				this.update(this.getid());	
 			}			
 
 			this.up = function(){
@@ -162,6 +156,24 @@
 				//每次循环需要更新当前id
 				this.setid();
 			}
+			this.checkEat = function(){
+				var tx = x, ty = y;
+				switch(Face){
+					case 'L':
+						tx --;
+						break;
+					case 'U':
+						ty --;
+						break;
+					case 'D':
+						ty ++;
+						break;
+					case 'R':
+						tx ++;
+						break;
+				}
+				return ((ty*17) + tx);				
+			}
 
 		}
 
@@ -196,19 +208,23 @@
 
 		//主逻辑负责监控是否吃到 是否需要生成新的方块
 		timer = setInterval(function(){
-			currentSnake.start();
+			
 			if(!FLAG){
 				Seeds = new Seed();
 				LENGTH ++;
 				Seeds.show();
 				FLAG = true;
 			}
-			if(currentSnake.getid() == Seeds.getid()){
+			if(currentSnake.checkEat() == Seeds.getid()){
 				console.log('吃到了...');
 				FLAG = false;
-				snake.unshift(Seeds.getid());
+				snake.unshift(currentSnake.getid());
+				if(!$("#id" + currentSnake.getid()).hasClass('snake')){
+					$("#id" + currentSnake.getid()).addClass('snake');	
+				}
 				currentSnake = Seeds;						
 			}
+			currentSnake.start();
 		}, 1000);
 
 	})(jQuery)
